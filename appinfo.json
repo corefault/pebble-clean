@@ -1,0 +1,19 @@
+{
+  "uuid": "c8378279-a95e-4f24-961b-90d35820fab7",
+  "shortName": "clean",
+  "longName": "clean",
+  "companyName": "corefault",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt"],
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
