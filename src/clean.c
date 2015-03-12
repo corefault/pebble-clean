@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "animation.h"
 
 enum TextLine {LineDate = 0, LineHour, LineMinute, LineTotal};
 
@@ -42,7 +43,7 @@ static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
    time_t now = time(NULL);
    struct tm * currentTime = localtime(&now);
    static char text[10][3];
-
+   
    snprintf (text[0], 10, "%s %02d", day[currentTime->tm_wday], currentTime->tm_mday);
    text_layer_set_text(text_layer[LineDate], text[0]);
 
@@ -51,6 +52,8 @@ static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 
    snprintf (text[2], 10, "%d", currentTime->tm_min);
    text_layer_set_text(text_layer[LineMinute], text[2]);
+   
+   ca_create(text_layer[LineDate],moveleft,2000,0);
 }
 
 // ==========================================================
