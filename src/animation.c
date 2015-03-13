@@ -1,61 +1,90 @@
-// =====================================
-// animation
+/**
+ * animation module for handling two animations and an update between both
+ * @author Daniel Kagemann @corefault
+ * @created 13.03.2015
+ *
+ */
 #include <pebble.h>
 #include "animation.h"
 
-// ======================
-// private: target rect depending on direction
-static GRect ca_get_target_frame (GRect src, enum AnimationDirection dir) {
+/**
+ * calculate the rectangle
+ */
+GRect ca_calc_rect (GRect src, enum animationdirection dir) {
    GRect    target = src;
    
    switch (dir) {
       case moveleft:
-      target.origin.x -= WIDTH;
+      target.origin.x -= 144;
       break;
       case moveright:
-      target.origin.x += WIDTH;
+      target.origin.x += 144;
       break;
-      case movetop:
-      target.origin.y -= HEIGHT;
+      case moveup:
+      target.origin.y -= 168;
       break;
-      case movebottom:
-      target.origin.y += HEIGHT;
+      case movedown:
+      target.origin.y += 168;
       break;
    }
-   
    return target;
 }
 
-// ======================
-// animation stopped
-void ca_stopped(Animation *animation, bool finished, void *data) {
-   property_animation_destroy((Animation*)data);
+/**
+ * stopped last animation
+ */
+void ca_stopped_all(Animation* animation, bool finished, void* data) {
+	// destroy animation
+	property_animation_destroy(animation);
 }
 
-// =======================
-// create and run animation
-void ca_create(Layer* layer,
-               enum AnimationDirection direction,
-               int duration,
-               int delay
-                         ) {
-   GRect  frame = layer_get_frame(layer);
-   GRect  target = ca_get_target_frame(frame, direction);
+/**
+ * stop animation callback handler for first
+ */
+void ca_stopped(Animation *animation, bool finished, void *data) {
+	animationchain*	self = (animationchain*)data;
+
+	// destroy animation
+	property_animation_destroy(animation);
+	
+	// update text layer
+	text_layer_set_text(self->layer, (char*)ca->textbuffer);
+	
+	// create new
+	self->prop  = property_animation_create_layer_frame((Layer*)layer, &self->last_rc_src, &self->last_rc_dest);
+	
+	animation_set_handlers((Animation*) self->prop, (AnimationHandlers) {
+       .started = NULL,
+       .stopped = (AnimationStoppedHandler) ca_stopped_all,
+     }, prop);
+	
+	// now start it
+    animation_schedule((Animation*) self->prop);
+}
+
+/**
+ * create propertyanimation
+ */
+void ca_initialize(animationchain* self, TextLayer* layer, enum animationdirection first_dir, enum animationdirection last_dir) {
+
+	// set the rects
+   GRect  frame  = layer_get_frame(layer);
+   self->first_rc_src = frame;
+   self->first_rc_dest= ca_calc_rect(frame, first_dir);
+
+	// TODO 
+   self->last_rc_src = frame;
+   self->last_rc_dest= ca_calc_rect(frame, last_dir);
    
-   PropertyAnimation* prop = property_animation_create_layer_frame(layer, &frame, &target);
+   self->prop = property_animation_create_layer_frame((Layer*)layer, &self->first_rc_src, &self->first_rc_dest);
    
    // set handler
-   animation_set_handlers((Animation*) prop, (AnimationHandlers) {
+   animation_set_handlers((Animation*) self->prop, (AnimationHandlers) {
        .started = NULL,
        .stopped = (AnimationStoppedHandler) ca_stopped,
      }, prop);
    
-     // some settings
-   animation_set_duration((Animation*)prop, duration);
-   animation_set_delay((Animation*)prop, delay);
-   
    // now start it
-   animation_schedule((Animation*) prop);
+   animation_schedule((Animation*) self->prop);
 }
 
-PropertyAnimation* coreanim_create(Layer* layer, )
