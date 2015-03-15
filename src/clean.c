@@ -32,8 +32,6 @@ static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
    char buffer[20];
    static int old_date = 0, old_hour = 100, old_minute = 100;
    
-   APP_LOG(APP_LOG_LEVEL_DEBUG, "handleminutetick(%p, %d)", tick_time, units_changed);
-   
    if (old_date == 0) {
       
       animDate.prop = animHour.prop = animMinute.prop = NULL;
@@ -92,8 +90,6 @@ static void window_load(Window *window) {
     text_layer_set_text_alignment(text_layer[i], GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(text_layer[i]));
   }
-  psleep(1000);
-  
   tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 }
 
@@ -109,13 +105,17 @@ static void window_unload(Window *window) {
 // initialize root window and handler
 static void init(void) {
   window = window_create();
+  
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
   });
+  
   window_stack_push(window, true);
-  window_set_background_color(window, GColorBlack);
   window_set_fullscreen(window, true);
+  window_set_background_color(window, GColorBlack);
+  
+  psleep(2000);
 }
 
 // ==========================================================
