@@ -5,17 +5,14 @@
  *
  */
  
- enum animationdirection { moveleft = 0, moveright, movedown, moveup };
+ enum animationdirection { appearFromLeft = 0, appearFromRight, appearFromTop, appearFromBottom };
  
  typedef struct t_animationchain {
-	char			textbuffer[20];
-	TextLayer		*layer;
-	
-	// animation 
-	PropertyAnimation	*prop;	// self destruction
-	
-	// rects
-	GRect				first_rc_src, first_rc_dest, last_rc_src, last_rc_dest;
+	char			  textbuffer[20];
+	PropertyAnimation	*prop;
+	TextLayer         *layer;
+   GRect          from, to;
  } animationchain;
  
+ void ca_initialize(animationchain* self, TextLayer* layer, char* text, enum animationdirection dir, int duration, int delay);
  

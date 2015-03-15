@@ -7,82 +7,69 @@
 #include <pebble.h>
 #include "animation.h"
 
+
 /**
  * calculate the rectangle
  */
-GRect ca_calc_rect (GRect src, enum animationdirection dir) {
-   GRect    target = src;
+void ca_calc_rect (GRect orig, animationchain* self, enum animationdirection dir) {
+   self->to = orig;
+   self->from = orig;
    
    switch (dir) {
-      case moveleft:
-      target.origin.x -= 144;
-      break;
-      case moveright:
-      target.origin.x += 144;
-      break;
-      case moveup:
-      target.origin.y -= 168;
-      break;
-      case movedown:
-      target.origin.y += 168;
-      break;
+      case appearFromLeft:
+         self->from.origin.x -= 144;
+         break;
+      case appearFromRight:
+         self->from.origin.x += 144;
+         break;
+      case appearFromTop:
+         self->from.origin.y -= 168;
+         break;
+      case appearFromBottom:
+         self->from.origin.y += 168;
+         break;
    }
-   return target;
 }
 
 /**
- * stopped last animation
+ * started animation callback handler
  */
-void ca_stopped_all(Animation* animation, bool finished, void* data) {
-	// destroy animation
-	property_animation_destroy(animation);
+void ca_started(Animation *animation, void *data) {
+   animationchain*	self = (animationchain*)data;
+	text_layer_set_text(self->layer, (char*)self->textbuffer);
 }
 
-/**
- * stop animation callback handler for first
- */
-void ca_stopped(Animation *animation, bool finished, void *data) {
-	animationchain*	self = (animationchain*)data;
-
-	// destroy animation
-	property_animation_destroy(animation);
-	
-	// update text layer
-	text_layer_set_text(self->layer, (char*)ca->textbuffer);
-	
-	// create new
-	self->prop  = property_animation_create_layer_frame((Layer*)layer, &self->last_rc_src, &self->last_rc_dest);
-	
-	animation_set_handlers((Animation*) self->prop, (AnimationHandlers) {
-       .started = NULL,
-       .stopped = (AnimationStoppedHandler) ca_stopped_all,
-     }, prop);
-	
-	// now start it
-    animation_schedule((Animation*) self->prop);
-}
 
 /**
  * create propertyanimation
  */
-void ca_initialize(animationchain* self, TextLayer* layer, enum animationdirection first_dir, enum animationdirection last_dir) {
+void ca_initialize(animationchain* self, TextLayer* layer, char* text, enum animationdirection dir, int duration, int delay) {
+
+   // check previous animations
+   if (self->prop != NULL) {
+      property_animation_destroy(self->prop);
+   }
 
 	// set the rects
-   GRect  frame  = layer_get_frame(layer);
-   self->first_rc_src = frame;
-   self->first_rc_dest= ca_calc_rect(frame, first_dir);
-
-	// TODO 
-   self->last_rc_src = frame;
-   self->last_rc_dest= ca_calc_rect(frame, last_dir);
+   GRect  frame  = layer_get_frame((Layer*)layer);
    
-   self->prop = property_animation_create_layer_frame((Layer*)layer, &self->first_rc_src, &self->first_rc_dest);
+   ca_calc_rect(frame, self, dir);
+
+   strcpy (self->textbuffer, text); // to avoid static vars all the time
+   APP_LOG(APP_LOG_LEVEL_DEBUG, "initialized with %s", self->textbuffer);
+   self->layer = layer;
+   
+   self->prop = property_animation_create_layer_frame((Layer*)layer, &self->from, &self->to);
    
    // set handler
    animation_set_handlers((Animation*) self->prop, (AnimationHandlers) {
-       .started = NULL,
-       .stopped = (AnimationStoppedHandler) ca_stopped,
-     }, prop);
+       .started = (AnimationStartedHandler) ca_started,
+       .stopped = NULL
+     }, self);
+   
+     animation_set_duration((Animation*)self->prop, duration);
+     animation_set_delay((Animation*)self->prop, delay);
+     animation_set_curve((Animation*)self->prop, AnimationCurveEaseInOut);
    
    // now start it
    animation_schedule((Animation*) self->prop);
