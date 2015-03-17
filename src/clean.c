@@ -158,6 +158,9 @@ static void init(void) {
   
   window_stack_push(window, true);
   window_set_fullscreen(window, true);
+  window_set_background_color(window, GColorBlack);
+  
+  psleep(2000);
 }
 
 // ==========================================================
