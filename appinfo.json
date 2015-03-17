@@ -4,16 +4,18 @@
   "longName": "clean",
   "companyName": "corefault",
   "versionCode": 1,
-  "versionLabel": "1.0",
+  "versionLabel": "1.2",
   "sdkVersion": "3",
   "targetPlatforms": ["aplite", "basalt"],
+  "capabilities": [ "configurable" ],
   "watchapp": {
     "watchface": true
   },
+  
   "appKeys": {
-    "dummy": 0
+    "invert": 0
   },
   "resources": {
-    "media": []
+    "media": [ ]
   }
 }
