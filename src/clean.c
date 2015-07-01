@@ -157,10 +157,10 @@ static void init(void) {
   });
   
   window_stack_push(window, true);
-  window_set_fullscreen(window, true);
+#ifdef PBL_PLATFORM_APLITE 
+     window_set_fullscreen(window, true);
+#endif 
   window_set_background_color(window, GColorBlack);
-  
-  psleep(2000);
 }
 
 // ==========================================================
