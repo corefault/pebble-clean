@@ -12,51 +12,67 @@
  *   - added animations
  * v1.2
  *   - configuration for inverted colors
+ * v1.3
+ *   - recompiled for SDK3
+ * v1.4
+ *   - changed configuration 
  */
 
 #include <pebble.h>
 #include "animation.h"
 
-#define OPTION_INVERTED    0
-
+#define THEME    0
+#define T_BLACK   1
+#define T_WHITE 2
+   
 enum TextLine {LineDate = 0, LineHour, LineMinute, LineTotal};
 
 static Window    *window;
 static TextLayer *text_layer[LineTotal];
-static bool      inverted = false;
+static int      defaults = T_BLACK;
 
 animationchain    animDate, animHour, animMinute;
+
+// ==========================================================
+// update
+static void update() {
+  int i;
+
+  for (i = 0; i < LineTotal; i++) {
+    text_layer_set_text_color(text_layer[i], (defaults == T_BLACK) ? GColorWhite : GColorBlack);
+    text_layer_set_background_color(text_layer[i], (defaults == T_BLACK) ? GColorClear : GColorWhite);
+  }
+}
 
 // ==========================================================
 // option handler
 static void in_recv_handler(DictionaryIterator *iterator, void *context)
 {
   //Get Tuple
-  int i;
   Tuple *t = dict_read_first(iterator);
+   APP_LOG(APP_LOG_LEVEL_DEBUG, "read: %p", t);
   
+   defaults = persist_read_int(THEME);
+   
+   APP_LOG(APP_LOG_LEVEL_DEBUG, "we have read: %d", defaults);
+   
+   if (defaults == 0) {
+      defaults = T_BLACK;
+   }
+   
+   
   if(t) {
-    switch(t->key)
-    {
-    case OPTION_INVERTED:
-      if(strcmp(t->value->cstring, "on") == 0) {
-         inverted = true;
-         persist_write_bool(OPTION_INVERTED, true);
-      }
-      else if(strcmp(t->value->cstring, "off") == 0) {
-        inverted = false;
-        persist_write_bool(OPTION_INVERTED, false);
-      }
-      break;
-    }
+     APP_LOG(APP_LOG_LEVEL_DEBUG, "val : %ud", t->value->uint8);
+     APP_LOG(APP_LOG_LEVEL_DEBUG, "val : %s", t->value->cstring);
+     APP_LOG(APP_LOG_LEVEL_DEBUG, "val : %d", t->value->uint16);
+
+
+      defaults = t->value->uint8;
+      persist_write_int(THEME, defaults);
   }
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "inverted : %s", inverted ? "yes" : "no");
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "theme : %d", defaults);
   
-  // update all
-  for (i = 0; i < LineTotal; i++) {
-    text_layer_set_text_color(text_layer[i], inverted ? GColorBlack : GColorWhite);
-  }
-  window_set_background_color(window, inverted ? GColorWhite : GColorBlack);
+  update();
 }
 
 
@@ -115,9 +131,12 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   int i;
 
-  inverted = persist_read_bool(OPTION_INVERTED);
+  defaults = persist_read_int(THEME);
+   if (defaults == 0) {
+      defaults = T_BLACK;
+   }
   
-  window_set_background_color(window, inverted ? GColorWhite : GColorBlack);
+  window_set_background_color(window, (defaults == T_BLACK) ? GColorClear : GColorWhite);
   
   char* font[] = {FONT_KEY_GOTHIC_14, FONT_KEY_BITHAM_42_BOLD, FONT_KEY_BITHAM_42_LIGHT};
   int size[] = {14, 44, 44};
@@ -125,13 +144,12 @@ static void window_load(Window *window) {
 
   for (i = 0; i < LineTotal; i++) {
     text_layer[i] = text_layer_create(GRect(0, pos[i], 144, size[i]));
-    text_layer_set_text_color(text_layer[i], inverted ? GColorBlack : GColorWhite);
-    text_layer_set_background_color(text_layer[i], GColorClear);
     text_layer_set_font(text_layer[i], fonts_get_system_font(font[i]));
     text_layer_set_text(text_layer[i], "---");
     text_layer_set_text_alignment(text_layer[i], GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(text_layer[i]));
   }
+  update();
   tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 }
 

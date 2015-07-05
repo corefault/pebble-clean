@@ -17,11 +17,11 @@ Pebble.addEventListener("showConfiguration", function() {
     console.log("read options: " + JSON.stringify(options));
     console.log("showing configuration");
 	 
-	 /*if (options['invert'] == null) {
-		 options['invert'] = "off";
+	 /*if (options['theme'] == null) {
+		 options['theme'] = 1;
 	 }*/
 	 
-    var uri = 'http://corefault.de/pebble-conf/clean.html?';// + 'invert=' + encodeURIComponent(options['invert']);
+    var uri = 'http://corefault.de/pebble-conf/clean-1.4.html?theme=' + encodeURIComponent(options['theme']);
     Pebble.openURL(uri);
 });
 
